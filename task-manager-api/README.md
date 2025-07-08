@@ -1,6 +1,6 @@
-# Task Manager App Backend
+# Task Manager API
 
-This is a Node.js + Express + TypeScript backend application using Prisma ORM and a Neon Postgres database.
+This is the backend API for the Task Manager application, built with Node.js, Express, TypeScript, Prisma, and Neon Postgres.
 
 ## Getting Started
 
@@ -25,9 +25,3 @@ This is a Node.js + Express + TypeScript backend application using Prisma ORM an
 - `POST /tasks` - Create a new task
 - `PUT /tasks/:id` - Update a task
 - `DELETE /tasks/:id` - Delete a task
-
-## Project Structure
-
-- `src/` - Source code
-- `prisma/` - Prisma schema and migrations
-- `.env` - Environment variables
