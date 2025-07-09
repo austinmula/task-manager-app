@@ -1,10 +1,13 @@
 import express, { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import authRoutes from "./routes/auth";
 
 const app = express();
 const prisma = new PrismaClient();
 
 app.use(express.json());
+
+app.use("/api/auth", authRoutes);
 
 // Test route
 app.get("/", (req: Request, res: Response) => {
