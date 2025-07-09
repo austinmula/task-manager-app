@@ -1,31 +1,130 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import { AuthenticatedRequest, TaskRequest } from "../types";
+import { AuthenticatedRequest, TaskRequest, TaskQueryParams } from "../types";
 
 const prisma = new PrismaClient();
 
-export const getAllTasks = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllTasks = async (
+  req: AuthenticatedRequest<{}, {}, {}, TaskQueryParams>,
+  res: Response
+) => {
   try {
-    const tasks = await prisma.task.findMany({
-      orderBy: { createdAt: "desc" },
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const {
+      page = "1",
+      limit = "10",
+      status,
+      category_id,
+      search,
+      sort = "created_at",
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build where clause
+    const where: any = {
+      user_id: userId,
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (category_id) {
+      where.category_id = parseInt(category_id);
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // Build orderBy clause
+    const orderBy: any = {};
+    if (sort === "due_date") {
+      orderBy.due_date = "asc";
+    } else if (sort === "title") {
+      orderBy.title = "asc";
+    } else {
+      orderBy.created_at = "desc";
+    }
+
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        orderBy,
+        skip: offset,
+        take: limitNum,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+        },
+      }),
+      prisma.task.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      tasks,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1,
+      },
     });
-    res.json(tasks);
   } catch (error) {
     console.error("Get tasks error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
+export const getTaskById = async (
+  req: AuthenticatedRequest<{ id: string }>,
+  res: Response
+) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
     const id = parseInt(req.params.id);
 
     if (isNaN(id)) {
       return res.status(400).json({ error: "Invalid task ID" });
     }
 
-    const task = await prisma.task.findUnique({
-      where: { id },
+    const task = await prisma.task.findFirst({
+      where: {
+        id,
+        user_id: userId,
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
     });
 
     if (!task) {
@@ -44,12 +143,44 @@ export const createTask = async (
   res: Response
 ) => {
   try {
-    const { title, description } = req.body;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const { title, description, due_date, status, category_id } = req.body;
+
+    // Validate category belongs to user if provided
+    if (category_id) {
+      const category = await prisma.category.findFirst({
+        where: {
+          id: category_id,
+          user_id: userId,
+        },
+      });
+
+      if (!category) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+    }
 
     const task = await prisma.task.create({
       data: {
         title,
         description: description || null,
+        due_date: due_date ? new Date(due_date) : null,
+        status: status || "pending",
+        category_id: category_id || null,
+        user_id: userId,
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
       },
     });
 
@@ -64,23 +195,48 @@ export const createTask = async (
 };
 
 export const updateTask = async (
-  req: AuthenticatedRequest<{}, {}, TaskRequest>,
+  req: AuthenticatedRequest<{ id: string }, {}, TaskRequest>,
   res: Response
 ) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
     const id = parseInt(req.params.id);
-    const { title, description, completed } = req.body;
+    const { title, description, due_date, status, category_id } = req.body;
 
     if (isNaN(id)) {
       return res.status(400).json({ error: "Invalid task ID" });
     }
 
-    const existingTask = await prisma.task.findUnique({
-      where: { id },
+    // Check if task exists and belongs to user
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id,
+        user_id: userId,
+      },
     });
 
     if (!existingTask) {
       return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Validate category belongs to user if provided
+    if (category_id !== undefined) {
+      if (category_id !== null) {
+        const category = await prisma.category.findFirst({
+          where: {
+            id: category_id,
+            user_id: userId,
+          },
+        });
+
+        if (!category) {
+          return res.status(400).json({ error: "Invalid category" });
+        }
+      }
     }
 
     const updatedTask = await prisma.task.update({
@@ -89,7 +245,24 @@ export const updateTask = async (
         title: title !== undefined ? title : existingTask.title,
         description:
           description !== undefined ? description : existingTask.description,
-        completed: completed !== undefined ? completed : existingTask.completed,
+        due_date:
+          due_date !== undefined
+            ? due_date
+              ? new Date(due_date)
+              : null
+            : existingTask.due_date,
+        status: status !== undefined ? status : existingTask.status,
+        category_id:
+          category_id !== undefined ? category_id : existingTask.category_id,
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
       },
     });
 
@@ -103,16 +276,28 @@ export const updateTask = async (
   }
 };
 
-export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteTask = async (
+  req: AuthenticatedRequest<{ id: string }>,
+  res: Response
+) => {
   try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
     const id = parseInt(req.params.id);
 
     if (isNaN(id)) {
       return res.status(400).json({ error: "Invalid task ID" });
     }
 
-    const existingTask = await prisma.task.findUnique({
-      where: { id },
+    // Check if task exists and belongs to user
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id,
+        user_id: userId,
+      },
     });
 
     if (!existingTask) {

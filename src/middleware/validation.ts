@@ -43,9 +43,32 @@ export const validateLogin = [
 export const validateTask = [
   body("title").trim().isLength({ min: 1 }).withMessage("Title is required"),
   body("description").optional().trim(),
-  body("completed")
+  body("due_date")
     .optional()
-    .isBoolean()
-    .withMessage("Completed must be a boolean"),
+    .isISO8601()
+    .withMessage("Due date must be a valid ISO 8601 date"),
+  body("status")
+    .optional()
+    .isIn(["pending", "in_progress", "completed", "cancelled"])
+    .withMessage(
+      "Status must be one of: pending, in_progress, completed, cancelled"
+    ),
+  body("category_id")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Category ID must be a positive integer"),
+  handleValidationErrors,
+];
+
+export const validateCategory = [
+  body("name")
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Category name is required"),
+  body("color")
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .withMessage(
+      "Color must be a valid hex color code (e.g., #FF0000 or #F00)"
+    ),
   handleValidationErrors,
 ];

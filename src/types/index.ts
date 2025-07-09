@@ -31,7 +31,18 @@ export interface RefreshTokenRequest {
 export interface TaskRequest {
   title: string;
   description?: string;
-  completed?: boolean;
+  due_date?: string; // ISO string
+  status?: string;
+  category_id?: number;
+}
+
+export interface TaskQueryParams {
+  page?: string;
+  limit?: string;
+  status?: string;
+  category_id?: string;
+  search?: string;
+  sort?: string;
 }
 
 export interface JwtPayload {
