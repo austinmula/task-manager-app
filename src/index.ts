@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth";
 import taskRoutes from "./routes/tasks";
@@ -6,6 +7,15 @@ import categoryRoutes from "./routes/categories";
 
 const app = express();
 const prisma = new PrismaClient();
+
+// Enable CORS for all origins
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 
