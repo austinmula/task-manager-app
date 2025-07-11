@@ -1,11 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import {
-  LoginRequest,
-  RegisterRequest,
-  RefreshTokenRequest,
-  AuthenticatedRequest,
-} from "../types";
+import { LoginRequest, RegisterRequest, RefreshTokenRequest } from "../types";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -16,12 +11,9 @@ import {
 
 const prisma = new PrismaClient();
 
-export const register = async (
-  req: Request<{}, {}, RegisterRequest>,
-  res: Response
-) => {
+export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name } = req.body as RegisterRequest;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -49,12 +41,9 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request<{}, {}, LoginRequest>,
-  res: Response
-) => {
+export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body as LoginRequest;
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -101,12 +90,9 @@ export const login = async (
   }
 };
 
-export const refresh = async (
-  req: Request<{}, {}, RefreshTokenRequest>,
-  res: Response
-) => {
+export const refresh = async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body as RefreshTokenRequest;
 
     if (!refreshToken) {
       return res.status(400).json({ error: "Refresh token required" });
@@ -143,12 +129,9 @@ export const refresh = async (
   }
 };
 
-export const logout = async (
-  req: Request<{}, {}, RefreshTokenRequest>,
-  res: Response
-) => {
+export const logout = async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body as RefreshTokenRequest;
 
     if (!refreshToken) {
       return res.status(400).json({ error: "Refresh token required" });
@@ -166,7 +149,10 @@ export const logout = async (
   }
 };
 
-export const me = async (req: AuthenticatedRequest, res: Response) => {
+export const me = async (
+  req: Request & { user?: { id: number; email: string; name: string } },
+  res: Response
+) => {
   res.json({
     user: req.user,
   });

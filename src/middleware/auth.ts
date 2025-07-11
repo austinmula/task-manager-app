@@ -1,12 +1,11 @@
-import { Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import { AuthenticatedRequest } from "../types";
 import { verifyAccessToken } from "../utils/auth";
 
 const prisma = new PrismaClient();
 
 export const authenticateToken = async (
-  req: AuthenticatedRequest,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response,
   next: NextFunction
 ) => {

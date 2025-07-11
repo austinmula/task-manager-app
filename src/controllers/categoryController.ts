@@ -1,6 +1,5 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import { AuthenticatedRequest } from "../types";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +9,7 @@ export interface CategoryRequest {
 }
 
 export const getAllCategories = async (
-  req: AuthenticatedRequest,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -37,7 +36,7 @@ export const getAllCategories = async (
 };
 
 export const getCategoryById = async (
-  req: AuthenticatedRequest<{ id: string }>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -76,7 +75,7 @@ export const getCategoryById = async (
 };
 
 export const createCategory = async (
-  req: AuthenticatedRequest<{}, {}, CategoryRequest>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -118,7 +117,7 @@ export const createCategory = async (
 };
 
 export const updateCategory = async (
-  req: AuthenticatedRequest<{ id: string }, {}, CategoryRequest>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -180,7 +179,7 @@ export const updateCategory = async (
 };
 
 export const deleteCategory = async (
-  req: AuthenticatedRequest<{ id: string }>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {

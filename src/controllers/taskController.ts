@@ -1,11 +1,11 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import { AuthenticatedRequest, TaskRequest, TaskQueryParams } from "../types";
+import { TaskRequest, TaskQueryParams } from "../types";
 
 const prisma = new PrismaClient();
 
 export const getAllTasks = async (
-  req: AuthenticatedRequest<{}, {}, {}, TaskQueryParams>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -23,8 +23,8 @@ export const getAllTasks = async (
       sort = "created_at",
     } = req.query;
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
 
     // Build where clause
@@ -37,7 +37,7 @@ export const getAllTasks = async (
     }
 
     if (category_id) {
-      where.category_id = parseInt(category_id);
+      where.category_id = parseInt(category_id as string);
     }
 
     if (search) {
@@ -96,7 +96,7 @@ export const getAllTasks = async (
 };
 
 export const getTaskById = async (
-  req: AuthenticatedRequest<{ id: string }>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -139,7 +139,7 @@ export const getTaskById = async (
 };
 
 export const createTask = async (
-  req: AuthenticatedRequest<{}, {}, TaskRequest>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -195,7 +195,7 @@ export const createTask = async (
 };
 
 export const updateTask = async (
-  req: AuthenticatedRequest<{ id: string }, {}, TaskRequest>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
@@ -277,7 +277,7 @@ export const updateTask = async (
 };
 
 export const deleteTask = async (
-  req: AuthenticatedRequest<{ id: string }>,
+  req: Request & { user?: { id: number; email: string; name: string } },
   res: Response
 ) => {
   try {
