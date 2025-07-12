@@ -8,12 +8,14 @@ import {
   comparePassword,
   verifyRefreshToken,
 } from "../utils/auth";
+import logger from "../utils/logger";
 
 const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body as RegisterRequest;
+    logger.info(`Registration attempt for email: ${email}`);
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -21,6 +23,7 @@ export const register = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
+      logger.warn(`Registration failed: Email already registered - ${email}`);
       return res.status(409).json({ error: "Email already registered" });
     }
 
@@ -31,12 +34,13 @@ export const register = async (req: Request, res: Response) => {
       select: { id: true, email: true, name: true, created_at: true },
     });
 
+    logger.info(`User registered successfully: ${email} (ID: ${user.id})`);
     res.status(201).json({
       message: "User registered successfully",
       user,
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error("Registration error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -44,6 +48,7 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body as LoginRequest;
+    logger.info(`Login attempt for email: ${email}`);
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -51,12 +56,14 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user) {
+      logger.warn(`Login failed: User not found - ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Verify password
     const isValidPassword = await comparePassword(password, user.password_hash);
     if (!isValidPassword) {
+      logger.warn(`Login failed: Invalid password - ${email}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -74,6 +81,7 @@ export const login = async (req: Request, res: Response) => {
       },
     });
 
+    logger.info(`User logged in successfully: ${email} (ID: ${user.id})`);
     res.json({
       message: "Login successful",
       accessToken,
@@ -85,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("Login error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { TaskRequest, TaskQueryParams } from "../types";
+import logger from "../utils/logger";
 
 const prisma = new PrismaClient();
 
@@ -13,6 +14,8 @@ export const getAllTasks = async (
     if (!userId) {
       return res.status(401).json({ error: "User not authenticated" });
     }
+
+    logger.debug(`Fetching tasks for user ID: ${userId}`);
 
     const {
       page = "1",
@@ -90,7 +93,7 @@ export const getAllTasks = async (
       },
     });
   } catch (error) {
-    console.error("Get tasks error:", error);
+    logger.error("Get tasks error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -149,6 +152,7 @@ export const createTask = async (
     }
 
     const { title, description, due_date, status, category_id } = req.body;
+    logger.info(`Creating task: "${title}" for user ID: ${userId}`);
 
     // Validate category belongs to user if provided
     if (category_id) {
@@ -184,12 +188,13 @@ export const createTask = async (
       },
     });
 
+    logger.info(`Task created successfully: "${task.title}" (ID: ${task.id})`);
     res.status(201).json({
       message: "Task created successfully",
       task,
     });
   } catch (error) {
-    console.error("Create task error:", error);
+    logger.error("Create task error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
