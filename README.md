@@ -43,40 +43,33 @@ src/
    npm run dev
    ```
 
-## 🔐 Authentication Endpoints
+## 📖 API Documentation
 
-| Method | Endpoint             | Description          | Auth Required |
-| ------ | -------------------- | -------------------- | ------------- |
-| POST   | `/api/auth/register` | User registration    | ❌            |
-| POST   | `/api/auth/login`    | User login           | ❌            |
-| POST   | `/api/auth/refresh`  | Refresh access token | ❌            |
-| POST   | `/api/auth/logout`   | Logout user          | ❌            |
-| GET    | `/api/auth/me`       | Get current user     | ✅            |
+The complete API documentation with request/response examples is available on Postman:
 
-## 📝 Task Endpoints
+**[📚 View API Documentation](https://documenter.getpostman.com/view/24559324/2sB34fngNk)**
 
-| Method | Endpoint         | Description     | Auth Required |
-| ------ | ---------------- | --------------- | ------------- |
-| GET    | `/api/tasks`     | Get all tasks   | ✅            |
-| GET    | `/api/tasks/:id` | Get task by ID  | ✅            |
-| POST   | `/api/tasks`     | Create new task | ✅            |
-| PUT    | `/api/tasks/:id` | Update task     | ✅            |
-| DELETE | `/api/tasks/:id` | Delete task     | ✅            |
+### Available Endpoints:
 
-## 🔑 Authentication Flow
+- **Authentication**: `/api/auth`
 
-1. **Register/Login** → Receive `accessToken` & `refreshToken`
-2. **API Requests** → Include `Authorization: Bearer <accessToken>`
-3. **Token Refresh** → Use `refreshToken` to get new `accessToken`
-4. **Logout** → Invalidate `refreshToken`
+  - POST `/register` - User registration
+  - POST `/login` - User login
+  - POST `/refresh` - Refresh access token
+  - POST `/logout` - User logout
+  - GET `/me` - Get current user
 
-## 💡 Features
+- **Tasks**: `/api/tasks`
 
-- ✅ JWT Authentication with Refresh Tokens
-- ✅ Input Validation & Sanitization
-- ✅ Secure Password Hashing (bcrypt)
-- ✅ TypeScript Support
-- ✅ MVC Architecture
-- ✅ Error Handling
-- ✅ Database Migrations with Prisma
-- ✅ Environment Configuration
+  - GET `/` - Get all tasks (with filtering)
+  - GET `/:id` - Get task by ID
+  - POST `/` - Create new task
+  - PUT `/:id` - Update task
+  - DELETE `/:id` - Delete task
+
+- **Categories**: `/api/categories`
+  - GET `/` - Get all categories
+  - GET `/:id` - Get category by ID
+  - POST `/` - Create new category
+  - PUT `/:id` - Update category
+  - DELETE `/:id` - Delete category
