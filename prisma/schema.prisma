@@ -38,15 +38,17 @@ model Task {
 }
 
 model User {
-    id            Int            @id @default(autoincrement())
-    email         String         @unique
-    password_hash String
-    name          String
-    created_at    DateTime       @default(now())
-    updated_at    DateTime       @updatedAt
-    refreshTokens RefreshToken[]
-    categories    Category[]
-    tasks         Task[]
+    id                     Int            @id @default(autoincrement())
+    email                  String         @unique
+    password_hash          String
+    name                   String
+    reset_password_token   String?        @unique
+    reset_password_expires DateTime?
+    created_at             DateTime       @default(now())
+    updated_at             DateTime       @updatedAt
+    refreshTokens          RefreshToken[]
+    categories             Category[]
+    tasks                  Task[]
 }
 
 model RefreshToken {
